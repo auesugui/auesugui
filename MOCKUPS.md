@@ -8,35 +8,42 @@
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ┌──────────────┬─────────────────────────────────────────────────────────────────────────┐
 │              │                                                                          │
-│  ┌────────┐  │                     Welcome to Text-to-SQL Assistant                    │
-│  │ User   │  │                                                                          │
-│  │ Menu   │  │                 Start by selecting a question template:                 │
-│  └────┬───┘  │                                                                          │
-│       │      │  ┌──────────────────────────┐  ┌──────────────────────────┐            │
-│  • Database  │  │                          │  │                          │            │
-│  • Logout    │  │  📊 Show total revenue   │  │  📈 Top 10 customers    │            │
-│  • Help/FAQs │  │     by region            │  │     by sales            │            │
-│  • Settings  │  │                          │  │                          │            │
-│              │  └──────────────────────────┘  └──────────────────────────┘            │
+│              │                     Welcome to Text-to-SQL Assistant                    │
+│              │                                                                          │
+│              │                 Start by selecting a question template:                 │
+│ [Dashboard]  │                                                                          │
+│              │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
+│ [+ New Chat] │  │   📊    │ │   📈    │ │   💰    │ │   👥    │ │   🔍    │ │   📅    │ │
+│              │  │ Revenue │ │  Top 10 │ │ Monthly │ │ Active  │ │ Product │ │  YoY    │ │
+│──────────────│  │   by    │ │Customer │ │   MRR   │ │  Users  │ │Inventory│ │ Growth  │ │
+│              │  │ Region  │ │by Sales │ │  Trend  │ │ Quarter │ │ Status  │ │         │ │
+│ Chat Threads │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ │
+│ ────────────│                                                                          │
+│              │                                                                          │
+│ (empty)      │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
+│              │                                                                          │
 │──────────────│                                                                          │
-│              │  ┌──────────────────────────┐  ┌──────────────────────────┐            │
-│ [Dashboard]  │  │                          │  │                          │            │
-│              │  │  💰 Monthly recurring    │  │  👥 Active users         │            │
-│ [+ New Chat] │  │     revenue trend        │  │     this quarter         │            │
-│              │  │                          │  │                          │            │
-│──────────────│  └──────────────────────────┘  └──────────────────────────┘            │
 │              │                                                                          │
-│ Chat Threads │  ┌──────────────────────────┐  ┌──────────────────────────┐            │
-│ ────────────│  │                          │  │                          │            │
-│              │  │  🔍 Product inventory    │  │  📅 Year-over-year       │            │
-│ (empty)      │  │     status               │  │     growth               │            │
-│              │  │                          │  │                          │            │
-│              │  └──────────────────────────┘  └──────────────────────────┘            │
-│              │                                                                          │
-│              │                                                                          │
-│              │                                                                          │
-│              │                                                                          │
-│              │                                                                          │
+│  ┌────────┐  │                                                                          │
+│  │ User   │  │                                                                          │
+│  │ Menu   │  │                                                                          │
+│  └────┬───┘  │                                                                          │
+│       │      │                                                                          │
+│  • Database  │                                                                          │
+│  • Logout    │                                                                          │
+│  • Help/FAQs │                                                                          │
+│  • Settings  │                                                                          │
 │              │                                                                          │
 └──────────────┴─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -51,39 +58,50 @@
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ┌──────────────┬─────────────────────────────────────────────────────────────────────────┐
 │              │                                                                          │
-│  ┌────────┐  │  ┌────────────────────────────────────────────────────────────────┐    │
-│  │ User   │  │  │ 👤 You                                              3:45 PM    │    │
-│  │ Menu   │  │  │ Show me total revenue by region for Q4 2023                    │    │
-│  └────┬───┘  │  └────────────────────────────────────────────────────────────────┘    │
-│       │      │                                                                          │
-│  • Database  │  ┌────────────────────────────────────────────────────────────────┐    │
-│  • Logout    │  │ 🤖 Assistant                                        3:45 PM    │    │
-│  • Help/FAQs │  │                                                                 │    │
-│  • Settings  │  │ ┌─────────────────────────────────────────────────────────┐   │    │
-│              │  │ │ Answer │ View SQL │ Chart                              │   │    │
-│──────────────│  │ ├─────────────────────────────────────────────────────────┤   │    │
-│              │  │ │                                                         │   │    │
-│ [Dashboard]  │  │ │  Here's the total revenue by region for Q4 2023:       │   │    │
-│              │  │ │                                                         │   │    │
-│ [+ New Chat] │  │ │  ┌──────────────┬────────────────┐                     │   │    │
-│              │  │ │  │ Region       │ Total Revenue  │                     │   │    │
-│──────────────│  │ │  ├──────────────┼────────────────┤                     │   │    │
-│              │  │ │  │ North        │ $2,450,000     │                     │   │    │
-│ Chat Threads │  │ │  │ South        │ $1,890,000     │                     │   │    │
-│ ────────────│  │ │  │ East         │ $3,120,000     │                     │   │    │
-│              │  │ │  │ West         │ $2,760,000     │                     │   │    │
-│ Revenue Q4   │  │ │  └──────────────┴────────────────┘                     │   │    │
-│   (active)   │  │ │                                                         │   │    │
-│              │  │ │  Total across all regions: $10,220,000                 │   │    │
-│ Top Customers│  │ │                                                         │   │    │
-│              │  │ └─────────────────────────────────────────────────────────┘   │    │
-│ Inventory    │  └────────────────────────────────────────────────────────────────┘    │
+│              │  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │ 👤 You                                              3:45 PM    │    │
+│              │  │ Show me total revenue by region for Q4 2023                    │    │
+│ [Dashboard]  │  └────────────────────────────────────────────────────────────────┘    │
 │              │                                                                          │
+│ [+ New Chat] │  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │ 🤖 Assistant                                        3:45 PM    │    │
+│──────────────│  │                                                                 │    │
+│              │  │ ┌─────────────────────────────────────────────────────────┐   │    │
+│ Chat Threads │  │ │ Answer │ View SQL │ Chart                              │   │    │
+│ ────────────│  │ ├─────────────────────────────────────────────────────────┤   │    │
+│              │  │ │                                                         │   │    │
+│ Revenue Q4   │  │ │  Here's the total revenue by region for Q4 2023:       │   │    │
+│   (active)   │  │ │                                                         │   │    │
+│              │  │ │  ┌──────────────┬────────────────┐                     │   │    │
+│ Top Customers│  │ │  │ Region       │ Total Revenue  │                     │   │    │
+│              │  │ │  ├──────────────┼────────────────┤                     │   │    │
+│ Inventory    │  │ │  │ North        │ $2,450,000     │                     │   │    │
+│              │  │ │  │ South        │ $1,890,000     │                     │   │    │
+│              │  │ │  │ East         │ $3,120,000     │                     │   │    │
+│              │  │ │  │ West         │ $2,760,000     │                     │   │    │
+│              │  │ │  └──────────────┴────────────────┘                     │   │    │
+│              │  │ │                                                         │   │    │
+│              │  │ │  Total across all regions: $10,220,000                 │   │    │
+│              │  │ │                                                         │   │    │
+│              │  │ └─────────────────────────────────────────────────────────┘   │    │
+│              │  └────────────────────────────────────────────────────────────────┘    │
 │              │                                                                          │
 │              │                                                                          │
 │              │  ┌────────────────────────────────────────────────────────────────┐    │
 │              │  │  💬 Ask a follow-up question...                     [Submit]   │    │
 │              │  └────────────────────────────────────────────────────────────────┘    │
+│              │                                                                          │
+│──────────────│                                                                          │
+│              │                                                                          │
+│  ┌────────┐  │                                                                          │
+│  │ User   │  │                                                                          │
+│  │ Menu   │  │                                                                          │
+│  └────┬───┘  │                                                                          │
+│       │      │                                                                          │
+│  • Database  │                                                                          │
+│  • Logout    │                                                                          │
+│  • Help/FAQs │                                                                          │
+│  • Settings  │                                                                          │
 │              │                                                                          │
 └──────────────┴─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -212,7 +230,120 @@
 
 ---
 
-## 6. Dashboard View (Pinned Charts)
+## 6. Follow-up Questions - Multiple Three-Tab Responses
+
+**Key Insight: Each response in WrenAI gets its own independent three-tab panel.**
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  [Company Watermark Logo]                                          [🌙 Theme Toggle]   │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────┬─────────────────────────────────────────────────────────────────────────┐
+│              │  (Scrollable conversation thread)                                       │
+│              │                                                                          │
+│              │  ┌────────────────────────────────────────────────────────────────┐    │
+│ [Dashboard]  │  │ 👤 You                                              3:45 PM    │    │
+│              │  │ Show me total revenue by region for Q4 2023                    │    │
+│ [+ New Chat] │  └────────────────────────────────────────────────────────────────┘    │
+│              │                                                                          │
+│──────────────│  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │ 🤖 Assistant                                        3:45 PM    │    │
+│ Chat Threads │  │ ┌─────────────────────────────────────────────────────────┐   │    │
+│ ────────────│  │ │ Answer │ View SQL │ Chart                              │   │    │
+│              │  │ ├─────────────────────────────────────────────────────────┤   │    │
+│ Revenue Q4   │  │ │ Here's the total revenue by region for Q4 2023:        │   │    │
+│   (active)   │  │ │ [Data table with 4 regions and revenue...]             │   │    │
+│              │  │ │ Total across all regions: $10,220,000                  │   │    │
+│ Top Customers│  │ └─────────────────────────────────────────────────────────┘   │    │
+│              │  └────────────────────────────────────────────────────────────────┘    │
+│ Inventory    │                                                                          │
+│              │  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │ 👤 You                                              3:47 PM    │    │
+│              │  │ Which region had the highest growth compared to Q3?            │    │
+│              │  └────────────────────────────────────────────────────────────────┘    │
+│              │                                                                          │
+│              │  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │ 🤖 Assistant                                        3:47 PM    │    │
+│              │  │ ┌─────────────────────────────────────────────────────────┐   │    │
+│              │  │ │ Answer │ View SQL │ Chart                  [📌 Pin]    │   │    │
+│              │  │ ├─────────────────────────────────────────────────────────┤   │    │
+│              │  │ │                                                         │   │    │
+│              │  │ │ Comparing Q4 2023 to Q3 2023:                          │   │    │
+│              │  │ │                                                         │   │    │
+│              │  │ │ ┌──────────┬────────────┬────────────┬──────────┐     │   │    │
+│              │  │ │ │ Region   │ Q3 Revenue │ Q4 Revenue │ Growth % │     │   │    │
+│              │  │ │ ├──────────┼────────────┼────────────┼──────────┤     │   │    │
+│              │  │ │ │ North    │ $2,100,000 │ $2,450,000 │ +16.7%   │     │   │    │
+│              │  │ │ │ South    │ $1,800,000 │ $1,890,000 │ +5.0%    │     │   │    │
+│              │  │ │ │ East     │ $2,500,000 │ $3,120,000 │ +24.8%   │  ← │   │    │
+│              │  │ │ │ West     │ $2,400,000 │ $2,760,000 │ +15.0%   │     │   │    │
+│              │  │ │ └──────────┴────────────┴────────────┴──────────┘     │   │    │
+│              │  │ │                                                         │   │    │
+│              │  │ │ 📈 East Asia had the highest growth at +24.8%          │   │    │
+│              │  │ │                                                         │   │    │
+│              │  │ └─────────────────────────────────────────────────────────┘   │    │
+│              │  └────────────────────────────────────────────────────────────────┘    │
+│              │                                                                          │
+│              │  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │ 👤 You                                              3:49 PM    │    │
+│              │  │ Show me a trend chart for East Asia over all 4 quarters       │    │
+│              │  └────────────────────────────────────────────────────────────────┘    │
+│              │                                                                          │
+│              │  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │ 🤖 Assistant                                        3:49 PM    │    │
+│              │  │ ┌─────────────────────────────────────────────────────────┐   │    │
+│              │  │ │ Answer │ View SQL │ Chart                  [📌 Pin]    │   │    │
+│──────────────│  │ ├─────────────────────────────────────────────────────────┤   │    │
+│              │  │ │                                                         │   │    │
+│  ┌────────┐  │  │ │ East Asia Quarterly Revenue Trend - 2023:             │   │    │
+│  │ User   │  │  │ │                                                         │   │    │
+│  │ Menu   │  │  │ │ Q1: $2,100,000 → Q2: $2,300,000 → Q3: $2,500,000 →    │   │    │
+│  └────┬───┘  │  │ │ Q4: $3,120,000                                         │   │    │
+│       │      │  │ │                                                         │   │    │
+│  • Database  │  │ │ 💡 Strong upward trend with 48.6% YoY growth          │   │    │
+│  • Logout    │  │ │                                                         │   │    │
+│  • Help/FAQs │  │ └─────────────────────────────────────────────────────────┘   │    │
+│  • Settings  │  └────────────────────────────────────────────────────────────────┘    │
+│              │                                                                          │
+│              │  ┌────────────────────────────────────────────────────────────────┐    │
+│              │  │  💬 Ask a follow-up question...                     [Submit]   │    │
+│              │  └────────────────────────────────────────────────────────────────┘    │
+│              │                                                                          │
+└──────────────┴─────────────────────────────────────────────────────────────────────────┘
+```
+
+### How WrenAI Manages State for Follow-ups:
+
+**Answer to your question: YES, each follow-up response generates its own three-tab panel.**
+
+**State Management Pattern:**
+
+1. **Thread-Based Architecture**: The `PromptThread` component maintains an array of messages
+2. **Independent Tab States**: Each assistant message has its own `AnswerResult` component
+3. **Each `AnswerResult` includes**:
+   - Separate Answer/View SQL/Chart tabs
+   - Independent tab selection state
+   - Lazy loading for Chart tab (generates only when clicked)
+4. **Context Awareness**: Follow-up queries maintain context from previous messages in the thread
+5. **SQL Evolution**: Each new response can reference previous queries but generates new SQL
+
+**Key Benefits:**
+- Users can compare different queries side-by-side
+- Each response's tabs remain accessible for reference
+- Previous chart visualizations stay visible while asking new questions
+- Users can pin charts from any response in the thread
+
+**Example Flow:**
+1. User asks initial question → Gets Response #1 with 3 tabs
+2. User clicks Chart tab on Response #1 → Chart generates
+3. User asks follow-up → Gets Response #2 with its own 3 tabs
+4. User can still scroll up and interact with Response #1's tabs
+5. User clicks Chart tab on Response #2 → New chart generates independently
+6. Both charts remain in the thread for comparison
+
+---
+
+## 7. Dashboard View (Pinned Charts)
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -220,33 +351,33 @@
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ┌──────────────┬─────────────────────────────────────────────────────────────────────────┐
 │              │                                                                          │
-│  ┌────────┐  │  Dashboard                                          [⚙️ Settings] [🔄 Refresh All] │
-│  │ User   │  │  ═══════════                                                            │
-│  │ Menu   │  │                                                                          │
-│  └────┬───┘  │  ┌──────────────────────────────┐  ┌──────────────────────────────┐   │
-│       │      │  │ Q4 2023 Revenue by Region ⋮ │  │ Top 10 Customers by Sales ⋮  │   │
-│  • Database  │  │ ┌──────────────────────────┐ │  │ ┌──────────────────────────┐ │   │
-│  • Logout    │  │ │                          │ │  │ │                          │ │   │
-│  • Help/FAQs │  │ │     Bar Chart            │ │  │ │    Horizontal Bar Chart  │ │   │
-│  • Settings  │  │ │                          │ │  │ │                          │ │   │
-│              │  │ │   [Chart Visualization]  │ │  │ │  [Chart Visualization]   │ │   │
-│──────────────│  │ │                          │ │  │ │                          │ │   │
+│              │  Dashboard                                   [⚙️ Settings] [🔄 Refresh All] │
+│              │  ═══════════                                                            │
+│ [Dashboard]  │                                                                          │
+│   (active)   │  ┌──────────────────────────────┐  ┌──────────────────────────────┐   │
+│              │  │ Q4 2023 Revenue by Region ⋮ │  │ Top 10 Customers by Sales ⋮  │   │
+│ [+ New Chat] │  │ ┌──────────────────────────┐ │  │ ┌──────────────────────────┐ │   │
 │              │  │ │                          │ │  │ │                          │ │   │
-│ [Dashboard]  │  │ └──────────────────────────┘ │  │ └──────────────────────────┘ │   │
-│   (active)   │  │ Last updated: 5 mins ago     │  │ Last updated: 2 mins ago     │   │
-│              │  └──────────────────────────────┘  └──────────────────────────────┘   │
-│ [+ New Chat] │                                                                          │
-│              │  ┌──────────────────────────────┐  ┌──────────────────────────────┐   │
-│──────────────│  │ Monthly Recurring Revenue ⋮  │  │ Active Users Trend       ⋮   │   │
+│──────────────│  │ │     Bar Chart            │ │  │ │    Horizontal Bar Chart  │ │   │
+│              │  │ │                          │ │  │ │                          │ │   │
+│ Chat Threads │  │ │   [Chart Visualization]  │ │  │ │  [Chart Visualization]   │ │   │
+│ ────────────│  │ │                          │ │  │ │                          │ │   │
+│              │  │ │                          │ │  │ │                          │ │   │
+│ Revenue Q4   │  │ └──────────────────────────┘ │  │ └──────────────────────────┘ │   │
+│              │  │ Last updated: 5 mins ago     │  │ Last updated: 2 mins ago     │   │
+│ Top Customers│  └──────────────────────────────┘  └──────────────────────────────┘   │
+│              │                                                                          │
+│ Inventory    │  ┌──────────────────────────────┐  ┌──────────────────────────────┐   │
+│              │  │ Monthly Recurring Revenue ⋮  │  │ Active Users Trend       ⋮   │   │
 │              │  │ ┌──────────────────────────┐ │  │ ┌──────────────────────────┐ │   │
-│ Chat Threads │  │ │                          │ │  │ │                          │ │   │
-│ ────────────│  │ │    Line Chart            │ │  │ │    Area Chart            │ │   │
 │              │  │ │                          │ │  │ │                          │ │   │
-│ Revenue Q4   │  │ │  [Chart Visualization]   │ │  │ │  [Chart Visualization]   │ │   │
+│              │  │ │    Line Chart            │ │  │ │    Area Chart            │ │   │
 │              │  │ │                          │ │  │ │                          │ │   │
-│ Top Customers│  │ │                          │ │  │ │                          │ │   │
+│              │  │ │  [Chart Visualization]   │ │  │ │  [Chart Visualization]   │ │   │
+│              │  │ │                          │ │  │ │                          │ │   │
+│              │  │ │                          │ │  │ │                          │ │   │
 │              │  │ └──────────────────────────┘ │  │ └──────────────────────────┘ │   │
-│ Inventory    │  │ Last updated: 10 mins ago    │  │ Last updated: 1 min ago      │   │
+│              │  │ Last updated: 10 mins ago    │  │ Last updated: 1 min ago      │   │
 │              │  └──────────────────────────────┘  └──────────────────────────────┘   │
 │              │                                                                          │
 │              │  ┌──────────────────────────────┐                                      │
@@ -262,6 +393,18 @@
 │              │  │ Last updated: 15 mins ago    │                                      │
 │              │  └──────────────────────────────┘                                      │
 │              │                                                                          │
+│──────────────│                                                                          │
+│              │                                                                          │
+│  ┌────────┐  │                                                                          │
+│  │ User   │  │                                                                          │
+│  │ Menu   │  │                                                                          │
+│  └────┬───┘  │                                                                          │
+│       │      │                                                                          │
+│  • Database  │                                                                          │
+│  • Logout    │                                                                          │
+│  • Help/FAQs │                                                                          │
+│  • Settings  │                                                                          │
+│              │                                                                          │
 └──────────────┴─────────────────────────────────────────────────────────────────────────┘
 
 Note: Each chart card has a ⋮ (three-dot) menu with options:
@@ -274,10 +417,33 @@ Note: Each chart card has a ⋮ (three-dot) menu with options:
 
 ---
 
-## 7. Nav Drawer - Expanded User Menu
+## 8. Nav Drawer - Expanded User Menu
 
 ```
 ┌──────────────┐
+│              │
+│ [Dashboard]  │
+│ [+ New Chat] │
+│              │
+│──────────────│
+│              │
+│ Chat Threads │
+│ ────────────│
+│              │
+│ Revenue Q4   │
+│              │
+│ Top Customers│
+│              │
+│ Inventory    │
+│              │
+│ MRR Trend    │
+│              │
+│              │
+│              │
+│              │
+│              │
+│              │
+│──────────────│
 │              │
 │  ┌────────┐  │
 │  │ User   │▼ │
@@ -297,46 +463,15 @@ Note: Each chart card has a ⋮ (three-dot) menu with options:
 │  Help / FAQs │
 │  Settings    │
 │              │
-│──────────────│
-│              │
-│ [Dashboard]  │
-│ [+ New Chat] │
-│              │
-│──────────────│
-│              │
-│ Chat Threads │
-│ ────────────│
-│              │
-│ Revenue Q4   │
-│              │
-│ Top Customers│
-│              │
-│ Inventory    │
-│              │
-│ MRR Trend    │
-│              │
-│              │
 └──────────────┘
 ```
 
 ---
 
-## 8. Nav Drawer - With Dashboard and New Chat Buttons
+## 9. Nav Drawer - With Dashboard and New Chat Buttons
 
 ```
 ┌──────────────────┐
-│                  │
-│  ┌────────┐      │
-│  │ User   │      │
-│  │ Menu   │      │
-│  └────┬───┘      │
-│       │          │
-│  • Database      │
-│  • Logout        │
-│  • Help/FAQs     │
-│  • Settings      │
-│                  │
-│──────────────────│
 │                  │
 │ ┌──────┬───────┐│
 │ │  📊  │  ➕   ││
@@ -366,12 +501,26 @@ Note: Each chart card has a ⋮ (three-dot) menu with options:
 │                  │
 │                  │
 │                  │
+│──────────────────│
+│                  │
+│  ┌────────┐      │
+│  │ User   │      │
+│  │ Menu   │      │
+│  └────┬───┘      │
+│       │          │
+│  • Database      │
+│  • Logout        │
+│  • Help/FAQs     │
+│  • Settings      │
+│                  │
+│                  │
+│                  │
 └──────────────────┘
 ```
 
 ---
 
-## 9. Complete Application Flow
+## 10. Complete Application Flow
 
 ### Flow 1: New User → Landing Page → Chat
 ```
@@ -414,7 +563,7 @@ Note: Each chart card has a ⋮ (three-dot) menu with options:
 
 ---
 
-## 10. Component Hierarchy
+## 11. Component Hierarchy
 
 ```
 App
