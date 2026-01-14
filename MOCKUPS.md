@@ -563,7 +563,285 @@ Note: Each chart card has a ⋮ (three-dot) menu with options:
 
 ---
 
-## 11. Component Hierarchy
+## 11. WrenAI Performance & Data Persistence Analysis
+
+### **Question 1: Does WrenAI optimize rendering for long threads?**
+
+**Answer: NO - WrenAI uses simple rendering without optimization.**
+
+**Current Implementation:**
+- **No virtualization** - All responses render simultaneously in the DOM
+- **No pagination** - Entire conversation history loads at once
+- **No lazy loading** - Every response component mounts immediately
+- **Simple iteration** - Uses basic `.map()` over responses array
+- **Only scroll management** - Auto-scrolls to bottom after new messages
+
+**Performance Impact:**
+```
+Thread with 3 responses:   ~9 components (3 × 3 tabs)
+Thread with 10 responses:  ~30 components
+Thread with 50 responses:  ~150 components (POTENTIAL LAG)
+```
+
+**Recommendation for Your App:**
+Implement one of these optimizations to prevent lag:
+
+1. **React Window/Virtualized List** (Recommended)
+   - Only renders visible responses + buffer
+   - Constant DOM size regardless of thread length
+   - Example: `react-window` or `react-virtuoso`
+
+2. **Pagination with "Load More"**
+   - Show last 10-20 responses by default
+   - "Load earlier messages" button at top
+   - Good for UX but requires state management
+
+3. **Collapse Old Responses**
+   - Auto-collapse responses after 10+ messages
+   - Show summary card instead of full tabs
+   - Users can expand if needed
+
+**Example with react-window:**
+```javascript
+import { VariableSizeList } from 'react-window';
+
+<VariableSizeList
+  height={windowHeight}
+  itemCount={responses.length}
+  itemSize={getResponseHeight} // Dynamic based on content
+  width="100%"
+>
+  {({ index, style }) => (
+    <div style={style}>
+      <ResponseWithTabs response={responses[index]} />
+    </div>
+  )}
+</VariableSizeList>
+```
+
+---
+
+### **Question 2: How does WrenAI handle data when returning to historical threads?**
+
+**Answer: Hybrid approach - Chart specs are cached, but query results are REFETCHED.**
+
+**What's Stored in Database:**
+
+✅ **Persisted (Immediate load):**
+- Thread metadata (id, summary, timestamp)
+- User questions
+- Generated SQL statements
+- **Chart specifications** (chartType, chartSchema as JSON)
+- Answer text content
+- Breakdown steps
+- Error states
+
+❌ **NOT Persisted (Must refetch):**
+- Actual query result data (table rows)
+- Chart data values
+- Preview data
+
+**Data Flow When Opening Historical Thread:**
+
+```
+User clicks thread → GraphQL query:
+  ↓
+THREAD query fetches:
+  {
+    id, responses {
+      question ✅ (instant)
+      sql ✅ (instant)
+      chartDetail {
+        chartType ✅ (instant)
+        chartSchema ✅ (instant)
+      }
+      answerDetail {
+        content ✅ (instant)
+      }
+    }
+  }
+  ↓
+User sees: Questions, SQL, empty chart placeholders
+  ↓
+Frontend automatically triggers:
+  - previewData(responseId) for each response
+  ↓
+Backend executes:
+  - queryService.preview(response.sql) ← LIVE QUERY
+  ↓
+User sees: Data populates in tables/charts
+```
+
+**Actual Implementation from WrenAI Code:**
+
+```typescript
+// askingService.ts - previewData method
+public async previewData(responseId: number, limit?: number) {
+  const response = await this.repository.findResponseById(responseId);
+  const project = await this.projectService.getCurrentProject();
+  const mdl = await this.mdlService.getLatestDeployedManifest();
+
+  // Executes LIVE SQL query - NO CACHE
+  const data = await this.queryService.preview(response.sql, {
+    project,
+    manifest: mdl,
+    limit,
+  });
+
+  return data;
+}
+```
+
+**What This Means for Users:**
+
+| Scenario | What Happens | User Experience |
+|----------|--------------|-----------------|
+| Open historical thread | Chart skeletons show immediately, then data loads ~1-2s | ⚠️ Brief loading state |
+| Switch between threads | Each thread refetches all data | ⚠️ Repeated wait times |
+| Network is slow | Stuck on loading spinners | ⚠️ Poor experience |
+| Database is large | Slower query execution | ⚠️ Can be 5-10s+ |
+
+---
+
+### **Recommendations for Your Application**
+
+**Option 1: Cache Query Results (Recommended)**
+
+Store actual query results in database with TTL (time-to-live):
+
+```sql
+CREATE TABLE query_result_cache (
+  response_id INT PRIMARY KEY,
+  data JSONB NOT NULL,
+  cached_at TIMESTAMP DEFAULT NOW(),
+  ttl_minutes INT DEFAULT 60,
+  CONSTRAINT fk_response FOREIGN KEY (response_id) REFERENCES thread_responses(id)
+);
+
+-- Auto-delete expired cache
+CREATE INDEX idx_cache_expiry ON query_result_cache
+  ((cached_at + (ttl_minutes * INTERVAL '1 minute')));
+```
+
+**Benefits:**
+- Instant load for recent threads
+- Configurable freshness (5min, 1hr, 24hr)
+- Reduces database load
+- Better user experience
+
+**Implementation:**
+```javascript
+async function getPreviewData(responseId) {
+  // Check cache first
+  const cached = await db.query(
+    `SELECT data FROM query_result_cache
+     WHERE response_id = $1
+     AND cached_at + (ttl_minutes * INTERVAL '1 minute') > NOW()`,
+    [responseId]
+  );
+
+  if (cached.rows.length > 0) {
+    return cached.rows[0].data; // Instant return
+  }
+
+  // Cache miss - execute query
+  const freshData = await executeSQL(response.sql);
+
+  // Store in cache
+  await db.query(
+    `INSERT INTO query_result_cache (response_id, data, ttl_minutes)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (response_id) DO UPDATE SET data = $2, cached_at = NOW()`,
+    [responseId, JSON.stringify(freshData), 60]
+  );
+
+  return freshData;
+}
+```
+
+**Option 2: Apollo Cache with Custom Policy**
+
+Configure longer cache retention for preview data:
+
+```javascript
+import { InMemoryCache } from '@apollo/client';
+
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        previewData: {
+          // Cache for 10 minutes
+          merge: false,
+          keyArgs: ['where', ['responseId']],
+          read(existing, { args }) {
+            if (existing && Date.now() - existing.timestamp < 600000) {
+              return existing.data;
+            }
+            return undefined; // Cache miss
+          }
+        }
+      }
+    }
+  }
+});
+```
+
+**Option 3: Skeleton UI with Progressive Enhancement**
+
+Show useful content immediately while data loads:
+
+```jsx
+<ResponseCard>
+  <Question>{response.question}</Question>
+  <Tabs>
+    <AnswerTab>
+      {answerLoading ? (
+        <SkeletonTable rows={5} />
+      ) : (
+        <DataTable data={answerData} />
+      )}
+    </AnswerTab>
+    <SQLTab>
+      <CodeBlock code={response.sql} /> {/* Instant */}
+    </SQLTab>
+    <ChartTab>
+      {chartLoading ? (
+        <ChartSkeleton type={response.chartType} />
+      ) : (
+        <Chart spec={response.chartSchema} data={chartData} />
+      )}
+    </ChartTab>
+  </Tabs>
+</ResponseCard>
+```
+
+**Option 4: Smart Caching Strategy**
+
+Implement tiered caching:
+
+```
+Level 1: Browser memory (Apollo cache) - 5 min
+Level 2: LocalStorage - 1 hour
+Level 3: Database cache - 24 hours
+Level 4: Live query - Fallback
+```
+
+---
+
+### **Performance Optimization Summary**
+
+| Issue | WrenAI Approach | Your App Should Consider |
+|-------|----------------|--------------------------|
+| **Long threads** | No optimization (all render) | Virtual scrolling or pagination |
+| **Data refetch** | Every time (no cache) | Cache with TTL (1hr recommended) |
+| **Chart load** | Lazy (on tab click) | ✅ Keep this - good pattern |
+| **Network errors** | Basic error handling | Retry logic + offline indicators |
+| **Large datasets** | 500 row limit | Same, or implement server-side pagination |
+
+---
+
+## 12. Component Hierarchy
 
 ```
 App
