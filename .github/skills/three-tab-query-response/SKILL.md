@@ -1,6 +1,6 @@
 ---
 name: three-tab-query-response
-description: Implement WrenAI-inspired three-tab architecture (Answer/View SQL/Chart) for text-to-SQL applications. Use when building query response interfaces with data tables, SQL display, and chart visualizations. Includes patterns for multi-response threads, chart pinning to dashboard, context drift detection and handling, performance optimization with virtualization, and data caching strategies. Designed for React with Salt DS components, Apache ECharts, and localStorage state management.
+description: Implement WrenAI-inspired three-tab architecture (Answer/View SQL/Chart) for text-to-SQL applications. Use when building query response interfaces with data tables, SQL display, and chart visualizations. Includes patterns for multi-response threads, chart pinning to dashboard, context drift detection and handling, Elasticsearch-powered search and discovery, performance optimization with virtualization, and data caching strategies. Designed for React with Salt DS components, Apache ECharts, Elasticsearch, and localStorage state management.
 ---
 
 # Three-Tab Query Response Architecture
@@ -24,8 +24,9 @@ Each assistant response in a conversation thread gets its own independent three-
 3. **Thread Continuity**: All responses remain visible and interactive
 4. **Chart Pinning**: Users can pin charts from any response to a dashboard
 5. **Context Drift Detection**: Intelligent detection and guidance when users switch topics
-6. **Performance Optimization**: Virtual scrolling for long threads
-7. **Data Caching**: Smart caching to reduce re-querying
+6. **Elasticsearch Search**: Full-text search, semantic search, and query discovery
+7. **Performance Optimization**: Virtual scrolling for long threads
+8. **Data Caching**: Smart caching to reduce re-querying
 
 ## Tech Stack
 
@@ -33,14 +34,16 @@ This implementation uses:
 - **React** with JavaScript and PropTypes
 - **Salt DS** components for UI (Tabs, Cards, Buttons, etc.)
 - **Apache ECharts** for chart visualizations
+- **Elasticsearch** for search, discovery, and analytics
 - **useLocalStorage** hook for client-side state management
-- **Database** for query result caching (optional but recommended)
+- **Database** (PostgreSQL/MySQL) for data persistence and caching
 
 **Reference Documentation:**
 - [references/mockups.md](references/mockups.md) or [root MOCKUPS.md](../../../MOCKUPS.md) - Visual specifications and UI flows
 - [references/tech-stack.md](references/tech-stack.md) - Technology decisions and patterns
 - [references/dashboard-patterns.md](references/dashboard-patterns.md) - Dashboard grid implementation
 - [references/context-drift-patterns.md](references/context-drift-patterns.md) - Context drift detection strategies
+- [references/elasticsearch-integration.md](references/elasticsearch-integration.md) - Search, discovery, and analytics with Elasticsearch
 
 ## Implementation Workflow
 
@@ -921,6 +924,18 @@ function ErrorState({ error, onRetry }) {
 - [ ] Follow-up action buttons for query refinements
 - [ ] Override tracking for adaptive sensitivity (optional)
 - [ ] Test scenarios for context detection
+
+### Elasticsearch Search & Discovery
+- [ ] Elasticsearch indices created (query-history, threads, pinned-charts)
+- [ ] Query indexing on every SQL execution
+- [ ] Global search bar in navigation
+- [ ] Autocomplete for query input
+- [ ] "Similar queries" panel on responses
+- [ ] Thread search functionality
+- [ ] Chart gallery with faceted search
+- [ ] Query analytics dashboard
+- [ ] Index lifecycle policies for cleanup
+- [ ] Monitoring and health checks
 
 ## Resources
 
