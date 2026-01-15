@@ -35,8 +35,9 @@ This implementation uses:
 - **useLocalStorage** hook for client-side state management
 - **Database** for query result caching (optional but recommended)
 
-For detailed mockups and visual specifications, see [references/mockups.md](references/mockups.md).
+For detailed mockups and visual specifications, see [references/mockups.md](references/mockups.md) or the [root MOCKUPS.md](../../../MOCKUPS.md).
 For technology decisions and patterns, see [references/tech-stack.md](references/tech-stack.md).
+For dashboard patterns and best practices, see [references/dashboard-patterns.md](references/dashboard-patterns.md).
 
 ## Implementation Workflow
 
