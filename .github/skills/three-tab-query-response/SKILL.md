@@ -1,6 +1,6 @@
 ---
 name: three-tab-query-response
-description: Implement WrenAI-inspired three-tab architecture (Answer/View SQL/Chart) for text-to-SQL applications. Use when building query response interfaces with data tables, SQL display, and chart visualizations. Includes patterns for multi-response threads, chart pinning to dashboard, performance optimization with virtualization, and data caching strategies. Designed for React with Salt DS components, Apache ECharts, and localStorage state management.
+description: Implement WrenAI-inspired three-tab architecture (Answer/View SQL/Chart) for text-to-SQL applications. Use when building query response interfaces with data tables, SQL display, and chart visualizations. Includes patterns for multi-response threads, chart pinning to dashboard, context drift detection and handling, performance optimization with virtualization, and data caching strategies. Designed for React with Salt DS components, Apache ECharts, and localStorage state management.
 ---
 
 # Three-Tab Query Response Architecture
@@ -23,8 +23,9 @@ Each assistant response in a conversation thread gets its own independent three-
 2. **Lazy Loading**: Chart tab generates visualizations only when clicked
 3. **Thread Continuity**: All responses remain visible and interactive
 4. **Chart Pinning**: Users can pin charts from any response to a dashboard
-5. **Performance Optimization**: Virtual scrolling for long threads
-6. **Data Caching**: Smart caching to reduce re-querying
+5. **Context Drift Detection**: Intelligent detection and guidance when users switch topics
+6. **Performance Optimization**: Virtual scrolling for long threads
+7. **Data Caching**: Smart caching to reduce re-querying
 
 ## Tech Stack
 
@@ -35,9 +36,11 @@ This implementation uses:
 - **useLocalStorage** hook for client-side state management
 - **Database** for query result caching (optional but recommended)
 
-For detailed mockups and visual specifications, see [references/mockups.md](references/mockups.md) or the [root MOCKUPS.md](../../../MOCKUPS.md).
-For technology decisions and patterns, see [references/tech-stack.md](references/tech-stack.md).
-For dashboard patterns and best practices, see [references/dashboard-patterns.md](references/dashboard-patterns.md).
+**Reference Documentation:**
+- [references/mockups.md](references/mockups.md) or [root MOCKUPS.md](../../../MOCKUPS.md) - Visual specifications and UI flows
+- [references/tech-stack.md](references/tech-stack.md) - Technology decisions and patterns
+- [references/dashboard-patterns.md](references/dashboard-patterns.md) - Dashboard grid implementation
+- [references/context-drift-patterns.md](references/context-drift-patterns.md) - Context drift detection strategies
 
 ## Implementation Workflow
 
@@ -468,6 +471,355 @@ function ThreeTabResponse({ response }) {
 }
 ```
 
+### Step 8: Implement Context Drift Detection and Handling
+
+One of the most critical challenges in multi-turn text-to-SQL conversations is context drift - when users switch topics or datasets mid-thread, potentially causing the AI to generate incorrect queries.
+
+**Recommended Approach: Hybrid Guidance System**
+
+Instead of forcing new threads or allowing unrestricted topic switching, implement an intelligent guidance system that:
+- Detects potential context switches
+- Guides users toward best practices
+- Allows override for edge cases
+- Makes thread scope transparent
+
+#### Thread Context Tracking
+
+Track the conversation context to detect topic switches:
+
+```jsx
+import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
+function ChatThread({ threadId }) {
+  const [messages, setMessages] = useState([]);
+  const [threadContext, setThreadContext] = useState({
+    primaryTopic: null,
+    relatedEntities: [],
+    sqlTablesFocused: [],
+    lastUpdated: null,
+  });
+
+  // Update context when new SQL is generated
+  const updateThreadContext = (newResponse) => {
+    const tables = extractTablesFromSQL(newResponse.sql);
+    const entities = extractEntitiesFromQuestion(newResponse.question);
+
+    setThreadContext(prev => ({
+      primaryTopic: prev.primaryTopic || newResponse.question,
+      relatedEntities: [...new Set([...prev.relatedEntities, ...entities])],
+      sqlTablesFocused: [...new Set([...prev.sqlTablesFocused, ...tables])],
+      lastUpdated: Date.now(),
+    }));
+  };
+
+  return (
+    <div className="chat-thread">
+      <ThreadContextBadge context={threadContext} />
+      <MessageList messages={messages} />
+      <ChatInput
+        onSubmit={(query) => handleSubmitQuery(query, threadContext)}
+      />
+    </div>
+  );
+}
+
+ChatThread.propTypes = {
+  threadId: PropTypes.string.isRequired,
+};
+```
+
+#### Context Similarity Detection
+
+Detect when a query is unrelated to the current thread:
+
+```jsx
+// Simple entity-based detection
+function detectContextShift(newQuery, threadContext) {
+  const newEntities = extractEntitiesFromQuestion(newQuery);
+  const newTables = extractTableReferences(newQuery);
+
+  // Calculate overlap with existing context
+  const entityOverlap = newEntities.filter(e =>
+    threadContext.relatedEntities.includes(e)
+  ).length;
+
+  const tableOverlap = newTables.filter(t =>
+    threadContext.sqlTablesFocused.includes(t)
+  ).length;
+
+  const entitySimilarity = entityOverlap / Math.max(newEntities.length, 1);
+  const tableSimilarity = tableOverlap / Math.max(newTables.length, 1);
+
+  // Determine shift severity
+  if (entitySimilarity < 0.2 && tableSimilarity === 0) {
+    return { type: 'major', confidence: 'high' };
+  } else if (entitySimilarity < 0.4 || tableSimilarity < 0.5) {
+    return { type: 'minor', confidence: 'medium' };
+  }
+
+  return { type: 'continuation', confidence: 'high' };
+}
+
+// Helper functions
+function extractEntitiesFromQuestion(question) {
+  // Simple keyword extraction (can be enhanced with NLP)
+  const keywords = question.toLowerCase()
+    .split(/\s+/)
+    .filter(word => word.length > 4);
+  return keywords;
+}
+
+function extractTableReferences(query) {
+  // Extract table names from query or use database schema matching
+  const tablePattern = /\b(allocations|issues|users|projects|revenue|customers)\b/gi;
+  return [...new Set((query.match(tablePattern) || []).map(t => t.toLowerCase()))];
+}
+
+function extractTablesFromSQL(sql) {
+  // Extract FROM and JOIN table references
+  const fromPattern = /FROM\s+(\w+)/gi;
+  const joinPattern = /JOIN\s+(\w+)/gi;
+
+  const tables = [
+    ...(sql.match(fromPattern) || []).map(m => m.replace(/FROM\s+/i, '')),
+    ...(sql.match(joinPattern) || []).map(m => m.replace(/JOIN\s+/i, '')),
+  ];
+
+  return [...new Set(tables.map(t => t.toLowerCase()))];
+}
+```
+
+#### Context Switch Warning Dialog
+
+Show a prompt when major context shift is detected:
+
+```jsx
+import { Dialog, Button } from '@salt-ds/core';
+import PropTypes from 'prop-types';
+
+function ContextSwitchDialog({
+  isOpen,
+  onClose,
+  currentTopic,
+  newQuery,
+  onContinue,
+  onNewThread
+}) {
+  return (
+    <Dialog open={isOpen} onClose={onClose}>
+      <Dialog.Header>
+        <Dialog.Title>Starting a new topic?</Dialog.Title>
+      </Dialog.Header>
+
+      <Dialog.Content>
+        <p>
+          Your current thread is focused on: <strong>{currentTopic}</strong>
+        </p>
+        <p>
+          Your new question appears to be about a different topic.
+        </p>
+        <div className="recommendation-box">
+          <p>💡 <strong>Recommendation:</strong> Start a new thread to keep your analysis organized and ensure accurate query generation.</p>
+        </div>
+      </Dialog.Content>
+
+      <Dialog.Actions>
+        <Button onClick={onContinue} variant="secondary">
+          Continue in this thread
+        </Button>
+        <Button onClick={onNewThread} variant="primary">
+          Start new thread
+        </Button>
+      </Dialog.Actions>
+    </Dialog>
+  );
+}
+
+ContextSwitchDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  currentTopic: PropTypes.string.isRequired,
+  newQuery: PropTypes.string.isRequired,
+  onContinue: PropTypes.func.isRequired,
+  onNewThread: PropTypes.func.isRequired,
+};
+```
+
+#### Query Submission with Context Detection
+
+Integrate context detection into the query submission flow:
+
+```jsx
+async function handleSubmitQuery(query, threadContext) {
+  // Skip detection for first message in thread
+  if (messages.length === 0) {
+    await submitQuery(query);
+    return;
+  }
+
+  // Detect context shift
+  const shift = detectContextShift(query, threadContext);
+
+  if (shift.type === 'major' && shift.confidence === 'high') {
+    // Show warning dialog
+    const userChoice = await showContextSwitchDialog({
+      currentTopic: threadContext.primaryTopic,
+      newQuery: query,
+    });
+
+    if (userChoice === 'new_thread') {
+      // Create new thread with this query
+      const newThreadId = await createNewThread();
+      navigateToThread(newThreadId, query);
+      return;
+    }
+  }
+
+  // Continue in current thread
+  await submitQuery(query);
+}
+
+function showContextSwitchDialog({ currentTopic, newQuery }) {
+  return new Promise((resolve) => {
+    setDialogState({
+      isOpen: true,
+      currentTopic,
+      newQuery,
+      onContinue: () => {
+        setDialogState({ isOpen: false });
+        resolve('continue');
+      },
+      onNewThread: () => {
+        setDialogState({ isOpen: false });
+        resolve('new_thread');
+      },
+    });
+  });
+}
+```
+
+#### Thread Scope Indicator
+
+Display the thread's current focus in the UI:
+
+```jsx
+import { Badge, Button } from '@salt-ds/core';
+import PropTypes from 'prop-types';
+
+function ThreadContextBadge({ context }) {
+  if (!context.primaryTopic) return null;
+
+  return (
+    <div className="thread-context-badge">
+      <Badge variant="info">
+        🎯 Focused on: {context.primaryTopic}
+      </Badge>
+      {context.sqlTablesFocused.length > 0 && (
+        <Badge variant="secondary">
+          Tables: {context.sqlTablesFocused.join(', ')}
+        </Badge>
+      )}
+      <Button
+        variant="text"
+        size="small"
+        onClick={() => {/* Start new thread */}}
+      >
+        Change topic →
+      </Button>
+    </div>
+  );
+}
+
+ThreadContextBadge.propTypes = {
+  context: PropTypes.shape({
+    primaryTopic: PropTypes.string,
+    sqlTablesFocused: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
+};
+```
+
+#### Follow-Up Action Buttons
+
+After a response with SQL/chart, show scoped follow-up options:
+
+```jsx
+import { Button } from '@salt-ds/core';
+import PropTypes from 'prop-types';
+
+function FollowUpActions({ response, onQuickAction, onNewTopic }) {
+  const quickActions = [
+    { id: 'remove-columns', label: 'Remove columns', icon: '✂️' },
+    { id: 'add-filter', label: 'Add filter', icon: '🔍' },
+    { id: 'change-date-range', label: 'Change date range', icon: '📅' },
+    { id: 'group-by', label: 'Group by different field', icon: '📊' },
+    { id: 'sort', label: 'Change sorting', icon: '⬆️' },
+  ];
+
+  return (
+    <div className="follow-up-actions">
+      <div className="quick-actions">
+        <p className="section-label">Refine this query:</p>
+        <div className="action-buttons">
+          {quickActions.map(action => (
+            <Button
+              key={action.id}
+              variant="secondary"
+              size="small"
+              onClick={() => onQuickAction(action.id, response)}
+            >
+              {action.icon} {action.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      <Button
+        variant="text"
+        onClick={onNewTopic}
+        className="new-topic-button"
+      >
+        Ask about something else →
+      </Button>
+    </div>
+  );
+}
+
+FollowUpActions.propTypes = {
+  response: PropTypes.object.isRequired,
+  onQuickAction: PropTypes.func.isRequired,
+  onNewTopic: PropTypes.func.isRequired,
+};
+```
+
+#### Best Practices for Context Drift Handling
+
+1. **Allow free-form input** - Don't restrict what users can type
+2. **Guide, don't force** - Suggest new threads but allow override
+3. **Make scope visible** - Show thread context in the UI
+4. **Provide quick actions** - Common refinements as buttons
+5. **Educate users** - Explain why topic switching matters
+6. **Track confidence** - Only warn on high-confidence context shifts
+7. **Learn from overrides** - If users consistently override, reduce sensitivity
+
+**Valid refinements within same context:**
+- ✅ Adding/removing columns
+- ✅ Changing filters (dates, categories)
+- ✅ Changing grouping/aggregation
+- ✅ Sorting differently
+- ✅ Adding calculated fields
+- ✅ Expanding/narrowing time ranges
+
+**Likely context switches (should prompt):**
+- ⚠️ Switching from allocations → issues
+- ⚠️ Switching from revenue → customer churn
+- ⚠️ Changing from project metrics → user metrics
+- ⚠️ Moving between unrelated database tables
+
+For comprehensive examples and advanced patterns, see [references/context-drift-patterns.md](references/context-drift-patterns.md).
+
 ## Dashboard Implementation
 
 For displaying pinned charts, see [references/dashboard-patterns.md](references/dashboard-patterns.md).
@@ -550,8 +902,9 @@ function ErrorState({ error, onRetry }) {
 4. **Test cache expiration** and refresh logic
 5. **Test pinning** doesn't duplicate charts on dashboard
 
-## Performance Checklist
+## Implementation Checklist
 
+### Performance
 - [ ] Virtual scrolling implemented for threads
 - [ ] Chart lazy loading on tab click
 - [ ] Query result caching (15 min TTL)
@@ -559,6 +912,15 @@ function ErrorState({ error, onRetry }) {
 - [ ] Debounce chart regeneration
 - [ ] Limit table rows to 500
 - [ ] Clean up old localStorage entries
+
+### Context Drift Handling
+- [ ] Thread context tracking (topic, tables, entities)
+- [ ] Context similarity detection implemented
+- [ ] Warning dialog for major context shifts
+- [ ] Thread scope badge visible in UI
+- [ ] Follow-up action buttons for query refinements
+- [ ] Override tracking for adaptive sensitivity (optional)
+- [ ] Test scenarios for context detection
 
 ## Resources
 
